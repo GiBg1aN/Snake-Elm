@@ -1,0 +1,127 @@
+var _chendrix$elm_matrix$Matrix$rowCount = function (m) {
+	return _elm_lang$core$Array$length(m);
+};
+var _chendrix$elm_matrix$Matrix$colCount = function (m) {
+	return A2(
+		_elm_lang$core$Maybe$withDefault,
+		0,
+		A2(
+			_elm_lang$core$Maybe$map,
+			_elm_lang$core$Array$length,
+			A2(_elm_lang$core$Array$get, 0, m)));
+};
+var _chendrix$elm_matrix$Matrix$fromList = function (l) {
+	return _elm_lang$core$Array$fromList(
+		A2(_elm_lang$core$List$map, _elm_lang$core$Array$fromList, l));
+};
+var _chendrix$elm_matrix$Matrix$toList = function (m) {
+	return _elm_lang$core$Array$toList(
+		A2(_elm_lang$core$Array$map, _elm_lang$core$Array$toList, m));
+};
+var _chendrix$elm_matrix$Matrix$flatten = function (m) {
+	return _elm_lang$core$List$concat(
+		_chendrix$elm_matrix$Matrix$toList(m));
+};
+var _chendrix$elm_matrix$Matrix$map = F2(
+	function (f, m) {
+		return A2(
+			_elm_lang$core$Array$map,
+			_elm_lang$core$Array$map(f),
+			m);
+	});
+var _chendrix$elm_matrix$Matrix$col = _elm_lang$core$Tuple$second;
+var _chendrix$elm_matrix$Matrix$row = _elm_lang$core$Tuple$first;
+var _chendrix$elm_matrix$Matrix$get = F2(
+	function (location, m) {
+		return A2(
+			_elm_lang$core$Maybe$andThen,
+			_elm_lang$core$Array$get(
+				_chendrix$elm_matrix$Matrix$col(location)),
+			A2(
+				_elm_lang$core$Array$get,
+				_chendrix$elm_matrix$Matrix$row(location),
+				m));
+	});
+var _chendrix$elm_matrix$Matrix$update = F3(
+	function (location, f, m) {
+		return A2(
+			_elm_lang$core$Maybe$withDefault,
+			m,
+			A2(
+				_elm_lang$core$Maybe$map,
+				function (current) {
+					return A2(
+						_elm_lang$core$Maybe$withDefault,
+						m,
+						A2(
+							_elm_lang$core$Maybe$map,
+							function (oldRow) {
+								return function (newRow) {
+									return A3(
+										_elm_lang$core$Array$set,
+										_chendrix$elm_matrix$Matrix$row(location),
+										newRow,
+										m);
+								}(
+									A3(
+										_elm_lang$core$Array$set,
+										_chendrix$elm_matrix$Matrix$col(location),
+										f(current),
+										oldRow));
+							},
+							A2(
+								_elm_lang$core$Array$get,
+								_chendrix$elm_matrix$Matrix$row(location),
+								m)));
+				},
+				A2(_chendrix$elm_matrix$Matrix$get, location, m)));
+	});
+var _chendrix$elm_matrix$Matrix$set = F3(
+	function (location, value, m) {
+		return A3(
+			_chendrix$elm_matrix$Matrix$update,
+			location,
+			_elm_lang$core$Basics$always(value),
+			m);
+	});
+var _chendrix$elm_matrix$Matrix$loc = F2(
+	function (v0, v1) {
+		return {ctor: '_Tuple2', _0: v0, _1: v1};
+	});
+var _chendrix$elm_matrix$Matrix$matrix = F3(
+	function (numRows, numCols, f) {
+		return A2(
+			_elm_lang$core$Array$initialize,
+			numRows,
+			function (row) {
+				return A2(
+					_elm_lang$core$Array$initialize,
+					numCols,
+					function (col) {
+						return f(
+							A2(_chendrix$elm_matrix$Matrix$loc, row, col));
+					});
+			});
+	});
+var _chendrix$elm_matrix$Matrix$square = function (size) {
+	return A2(_chendrix$elm_matrix$Matrix$matrix, size, size);
+};
+var _chendrix$elm_matrix$Matrix$mapWithLocation = F2(
+	function (f, m) {
+		return A2(
+			_elm_lang$core$Array$indexedMap,
+			F2(
+				function (rowNum, row) {
+					return A2(
+						_elm_lang$core$Array$indexedMap,
+						F2(
+							function (colNum, element) {
+								return A2(
+									f,
+									A2(_chendrix$elm_matrix$Matrix$loc, rowNum, colNum),
+									element);
+							}),
+						row);
+				}),
+			m);
+	});

@@ -1,0 +1,33 @@
+var _chendrix$elm_matrix$Matrix_Random$matrixUsing = F3(
+	function (widthGenerator, heightGenerator, f) {
+		return A3(
+			_elm_lang$core$Random$map2,
+			F2(
+				function (width, height) {
+					return A3(_chendrix$elm_matrix$Matrix$matrix, width, height, f);
+				}),
+			widthGenerator,
+			heightGenerator);
+	});
+var _chendrix$elm_matrix$Matrix_Random$matrix = F3(
+	function (widthGenerator, heightGenerator, elementGenerator) {
+		return A2(
+			_elm_lang$core$Random$andThen,
+			function (width) {
+				return A2(
+					_elm_lang$core$Random$andThen,
+					function (height) {
+						var rowGenerator = A2(
+							_elm_lang$core$Random$map,
+							_elm_lang$core$Array$fromList,
+							A2(_elm_lang$core$Random$list, width, elementGenerator));
+						var matrixAsArrayGenerator = A2(
+							_elm_lang$core$Random$map,
+							_elm_lang$core$Array$fromList,
+							A2(_elm_lang$core$Random$list, height, rowGenerator));
+						return matrixAsArrayGenerator;
+					},
+					heightGenerator);
+			},
+			widthGenerator);
+	});

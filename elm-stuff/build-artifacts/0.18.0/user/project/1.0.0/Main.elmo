@@ -1,0 +1,46 @@
+var _user$project$Main$initSnake = function (n) {
+	return {
+		ctor: '::',
+		_0: {ctor: '_Tuple2', _0: 3, _1: 3},
+		_1: {
+			ctor: '::',
+			_0: {ctor: '_Tuple2', _0: 3, _1: 4},
+			_1: {
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: 3, _1: 5},
+				_1: {ctor: '[]'}
+			}
+		}
+	};
+};
+var _user$project$Main$Model = F3(
+	function (a, b, c) {
+		return {board: a, status: b, snake: c};
+	});
+var _user$project$Main$Lost = {ctor: 'Lost'};
+var _user$project$Main$Moving = {ctor: 'Moving'};
+var _user$project$Main$Absent = {ctor: 'Absent'};
+var _user$project$Main$initMatrix = F2(
+	function (m, n) {
+		return A3(
+			_chendrix$elm_matrix$Matrix$matrix,
+			m,
+			n,
+			function (loc) {
+				return _user$project$Main$Absent;
+			});
+	});
+var _user$project$Main$model = {
+	board: A2(_user$project$Main$initMatrix, 10, 10),
+	status: _user$project$Main$Moving,
+	snake: _user$project$Main$initSnake(5)
+};
+var _user$project$Main$Present = {ctor: 'Present'};
+var _user$project$Main$Right = {ctor: 'Right'};
+var _user$project$Main$Left = {ctor: 'Left'};
+var _user$project$Main$Down = {ctor: 'Down'};
+var _user$project$Main$Up = {ctor: 'Up'};
+var _user$project$Main$Move = function (a) {
+	return {ctor: 'Move', _0: a};
+};
+var _user$project$Main$Reset = {ctor: 'Reset'};
