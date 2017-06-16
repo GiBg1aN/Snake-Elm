@@ -1,16 +1,13 @@
--- import Html exposing (..)
--- import Html.Events exposing (..)
--- import Html.Attributes exposing (..)
-
-
 module Main exposing (..)
 
 import Matrix exposing (..)
+import Html exposing (..)
+import Html.Events exposing (..)
+import Html.Attributes exposing (..)
 
-
--- main : Program Never Model Msg
--- main = Html.beginnerProgram { model = model, view = view, update = update }
--- MODEL
+main : Program Never Model Msg
+main = Html.beginnerProgram { model = model, view = view, update = update }
+--MODEL
 
 
 type alias Model =
@@ -77,16 +74,16 @@ updateSnake l d m =
                 newHead =
                     case d of
                         Up ->
-                            ( i + 1, j )
+                            ( (i - 1) % 10, j )
 
                         Down ->
-                            ( i - 1, j )
+                            ( (i + 1) % 10, j )
 
                         Left ->
-                            ( i, j - 1 )
+                            ( i, (j - 1) % 10 )
 
                         Right ->
-                            ( i, j + 1 )
+                            ( i, (j + 1) % 10 )
             in
             case Matrix.get newHead m of
                 Just Present ->
@@ -153,5 +150,33 @@ update msg model =
 
 
 -- VIEW
--- view : Model -> Html Msg
--- view model =
+renderCell : Cell -> Html msg
+renderCell p =
+    case p of
+    Present -> td [ style [ ("margin","5px"), ( "padding", "30px" ), ( "width", "5px" ), ( "height", "5px" ), ( "background-color", "black" )] ] []
+    Absent -> td [ style [ ("margin","5px"),( "padding", "30px" ), ( "width", "5px" ), ( "height", "5px" ), ( "background-color", "grey" ) ] ] []
+
+
+addSnake : Snake -> Board -> Board
+addSnake s m =
+    m |> Matrix.mapWithLocation (\lct c -> if List.member lct s then Present else Absent)
+
+
+view : Model -> Html Msg
+view model =
+    let reset =
+        div [] [ button [ onClick Reset, class "btn" ] [ text "Reset" ] ]
+
+
+
+        cells =
+             model.board |> (addSnake model.snake) >> (Matrix.map (\c -> renderCell c)) >> Matrix.toList >> (List.map (\r -> tr [] r))
+
+        board =
+            if model.status == Lost then
+                div [ style [ ( "display", "flex" ), ( "padding", "20px" ) ] ] [ h1 [] [ text "You Lost!" ] ]
+            else
+                div [ style [ ( "display", "flex" ), ( "padding", "25px" ) ] ] [table [] cells]
+    in
+    div [] [ div [] [ h3 [ style [ ( "padding-bottom", "5px" ) ] ] [] ], board, reset ]
+
