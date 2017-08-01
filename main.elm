@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Keyboard.Extra as KE exposing (Direction(..), Key, arrowsDirection)
+import List.Extra as ListE exposing (..)
 import Matrix exposing (..)
 import Random exposing (Generator, int, pair)
 
@@ -170,8 +171,8 @@ isFailed location snake =
 
 
 isEaten : Snake -> Snake -> Cmd Msg
-isEaten snake1 snake2 =
-    if List.length snake1 == List.length snake2 then
+isEaten oldSnake newSnake =
+    if List.length oldSnake == (ListE.unique >> List.length <| newSnake) then
         Cmd.none
     else
         Random.generate Food <| pair (int 0 10) (int 0 10)
