@@ -3,7 +3,7 @@ module Main exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Keyboard.Extra exposing (Direction(..), Key, arrowsDirection)
+import Keyboard.Extra as KE exposing (Direction(..), Key, arrowsDirection)
 import Matrix exposing (..)
 import Random exposing (Generator, int, pair)
 
@@ -55,7 +55,7 @@ type alias Snake =
 
 type Msg
     = Reset
-    | KeyboardMsg Keyboard.Extra.Msg
+    | KeyboardMsg KE.Msg
     | Food Location
 
 
@@ -197,7 +197,7 @@ update msg model =
         KeyboardMsg move ->
             let
                 pressedKeys =
-                    Keyboard.Extra.update move model.pressedKeys
+                    KE.update move model.pressedKeys
 
                 direction =
                     if List.length pressedKeys == 1 then
@@ -220,7 +220,7 @@ update msg model =
                                 else if isFailed x xs then
                                     ( { model
                                         | status = Lost
-                                        , pressedKeys = Keyboard.Extra.update move model.pressedKeys
+                                        , pressedKeys = KE.update move model.pressedKeys
                                         , lastMove = direction
                                       }
                                     , newMessage
@@ -229,7 +229,7 @@ update msg model =
                                     ( { model
                                         | board = addSnakeAndFood (x :: xs) model.foodLocation model.board
                                         , snake = x :: xs
-                                        , pressedKeys = Keyboard.Extra.update move model.pressedKeys
+                                        , pressedKeys = KE.update move model.pressedKeys
                                       }
                                     , newMessage
                                     )
@@ -289,4 +289,4 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.map KeyboardMsg Keyboard.Extra.subscriptions
+    Sub.map KeyboardMsg KE.subscriptions
