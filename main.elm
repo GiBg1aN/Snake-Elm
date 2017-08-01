@@ -10,7 +10,6 @@ import Random exposing (Generator, int, pair)
 
 --TODO: HANDLE RANDOM SPAWN ON THE SNAKE
 --TODO: OPTIMIZE FUNCTION PARAMETERS
---TODO: RENAME FUNCTION PARAMETERS
 
 
 main : Program Never Model Msg
@@ -33,7 +32,7 @@ type alias Model =
     , snake : Snake
     , pressedKeys : List Key
     , lastMove : Direction
-    , foodGenerator : Location
+    , foodLocation : Location
     }
 
 
@@ -58,7 +57,7 @@ type alias Snake =
 type Msg
     = Reset
     | KeyboardMsg Keyboard.Extra.Msg
-    | NewFood Location
+    | Food Location
 
 
 model : ( Model, Cmd Msg )
@@ -68,7 +67,7 @@ model =
       , snake = initSnake
       , pressedKeys = []
       , lastMove = West
-      , foodGenerator = ( 1, 1 )
+      , foodLocation = ( 1, 1 )
       }
     , Cmd.none
     )
@@ -76,7 +75,7 @@ model =
 
 initMatrix : Int -> Int -> Location -> Snake -> Board
 initMatrix m n foodLocation snake =
-    Matrix.matrix m n (\loc -> Absent) |> Matrix.set foodLocation Present >> addSnake snake foodLocation
+    Matrix.matrix m n (\location -> Absent) |> Matrix.set foodLocation Present >> addSnake snake foodLocation
 
 
 
@@ -89,31 +88,31 @@ initSnake =
 
 
 parseHead : Direction -> Location -> Model -> Location
-parseHead d l model =
+parseHead direction location model =
     let
         ( i, j ) =
-            l
+            location
     in
-    case d of
-        North ->
-            ( (i - 1) % 10, j )
+        case direction of
+            North ->
+                ( (i - 1) % 10, j )
 
-        South ->
-            ( (i + 1) % 10, j )
+            South ->
+                ( (i + 1) % 10, j )
 
-        West ->
-            ( i, (j - 1) % 10 )
+            West ->
+                ( i, (j - 1) % 10 )
 
-        East ->
-            ( i, (j + 1) % 10 )
+            East ->
+                ( i, (j + 1) % 10 )
 
-        _ ->
-            Debug.crash "INVALID KEY"
+            _ ->
+                Debug.crash "INVALID KEY"
 
 
 isbackwardColliding : Snake -> Snake -> Bool
-isbackwardColliding oldS newS =
-    case ( oldS, newS ) of
+isbackwardColliding oldSnake newSnake =
+    case ( oldSnake, newSnake ) of
         ( x :: xx :: xs, y :: ys ) ->
             if xx == y then
                 True
@@ -125,50 +124,50 @@ isbackwardColliding oldS newS =
 
 
 updateSnake : Snake -> Direction -> Board -> Model -> Maybe Snake
-updateSnake l d m model =
+updateSnake snake direction board model =
     -- TODO: collapse model and board in a single argument
-    if d /= NoDirection then
-        case List.head l of
+    if direction /= NoDirection then
+        case List.head snake of
             Just x ->
                 let
                     newHead =
-                        parseHead d x model
+                        parseHead direction x model
                 in
-                case Matrix.get newHead m of
-                    Just Present ->
-                        Just (newHead :: l)
+                    case Matrix.get newHead board of
+                        Just Present ->
+                            Just (newHead :: snake)
 
-                    Just Absent ->
-                        Just (newHead :: (l |> List.take (List.length l - 1)))
+                        Just Absent ->
+                            Just (newHead :: (snake |> List.take (List.length snake - 1)))
 
-                    Nothing ->
-                        Debug.crash "OUT OF RANGE INDEX"
+                        Nothing ->
+                            Debug.crash "OUT OF RANGE INDEX"
 
             Nothing ->
                 Nothing
     else
-        Just l
+        Just snake
 
 
 isFailed : Location -> Snake -> Bool
-isFailed c l =
-    case l of
+isFailed location snake =
+    case snake of
         x :: xs ->
-            if x == c then
+            if x == location then
                 True
             else
-                isFailed c xs
+                isFailed location xs
 
         [] ->
             False
 
 
 isEaten : Snake -> Snake -> Cmd Msg
-isEaten s1 s2 =
-    if List.length s1 == List.length s2 then
+isEaten snake1 snake2 =
+    if List.length snake1 == List.length snake2 then
         Cmd.none
     else
-        Random.generate NewFood <| pair (int 0 10) (int 0 10)
+        Random.generate Food <| pair (int 0 10) (int 0 10)
 
 
 
@@ -179,46 +178,70 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Reset ->
-            ( { model | board = initMatrix 10 10 ( 1, 1 ) initSnake, status = Moving, snake = initSnake, pressedKeys = [] }, Cmd.none )
+            ( { model
+                | board = initMatrix 10 10 ( 1, 1 ) initSnake
+                , status = Moving
+                , snake = initSnake
+                , pressedKeys = []
+              }
+            , Cmd.none
+            )
 
         KeyboardMsg move ->
             let
-                pKeys =
+                pressedKeys =
                     Keyboard.Extra.update move model.pressedKeys
 
-                dir =
-                    if List.length pKeys == 1 then
-                        arrowsDirection <| pKeys
+                direction =
+                    if List.length pressedKeys == 1 then
+                        arrowsDirection <| pressedKeys
                     else
-                        arrowsDirection <| List.drop (List.length pKeys - 1) pKeys
+                        arrowsDirection <| List.drop (List.length pressedKeys - 1) pressedKeys
 
-                new_snake =
-                    updateSnake model.snake dir model.board model
+                newSnake =
+                    updateSnake model.snake direction model.board model
             in
-            if model.status /= Lost then
-                case new_snake of
-                    Just (x :: xs) ->
-                        let
-                            newMsg =
-                                isEaten model.snake (x :: xs)
-                        in
-                        if isbackwardColliding model.snake (x :: xs) then
-                            ( model, newMsg )
-                        else if isFailed x xs then
-                            ( { model | status = Lost, pressedKeys = Keyboard.Extra.update move model.pressedKeys, lastMove = dir }, newMsg )
-                        else
-                            ( { model | board = addSnake (x :: xs) model.foodGenerator model.board, snake = x :: xs, pressedKeys = Keyboard.Extra.update move model.pressedKeys }, newMsg )
+                if model.status /= Lost then
+                    case newSnake of
+                        Just (x :: xs) ->
+                            let
+                                newMessage =
+                                    isEaten model.snake (x :: xs)
+                            in
+                                if isbackwardColliding model.snake (x :: xs) then
+                                    ( model, newMessage )
+                                else if isFailed x xs then
+                                    ( { model
+                                        | status = Lost
+                                        , pressedKeys = Keyboard.Extra.update move model.pressedKeys
+                                        , lastMove = direction
+                                      }
+                                    , newMessage
+                                    )
+                                else
+                                    ( { model
+                                        | board = addSnake (x :: xs) model.foodLocation model.board
+                                        , snake = x :: xs
+                                        , pressedKeys = Keyboard.Extra.update move model.pressedKeys
+                                      }
+                                    , newMessage
+                                    )
 
-                    Just [] ->
-                        Debug.crash "EMPTY SNAKE" ( model, Cmd.none )
+                        Just [] ->
+                            Debug.crash "EMPTY SNAKE" ( model, Cmd.none )
 
-                    Nothing ->
-                        Debug.log "EMPTY NEWSNAKE" ( model, Cmd.none )
-            else
-                ( { model | pressedKeys = [] }, Cmd.none )
+                        Nothing ->
+                            Debug.log "EMPTY NEWSnakeNAKE" ( model, Cmd.none )
+                else
+                    ( { model | pressedKeys = [] }, Cmd.none )
 
-        NewFood f ->
-            ( { model | foodGenerator = f, board = Matrix.set f Present model.board }, Cmd.none )
+        Food food ->
+            ( { model
+                | foodLocation = food
+                , board = Matrix.set food Present model.board
+              }
+            , Cmd.none
+            )
 
 
 
@@ -226,8 +249,8 @@ update msg model =
 
 
 renderCell : Cell -> Html msg
-renderCell p =
-    case p of
+renderCell cell =
+    case cell of
         Present ->
             td [ style [ ( "margin", "5px" ), ( "padding", "30px" ), ( "width", "5px" ), ( "height", "5px" ), ( "background-color", "black" ) ] ] []
 
@@ -236,11 +259,11 @@ renderCell p =
 
 
 addSnake : Snake -> Location -> Board -> Board
-addSnake s food m =
-    m
+addSnake snake food board =
+    board
         |> Matrix.mapWithLocation
-            (\lct c ->
-                if List.member lct s then
+            (\location c ->
+                if List.member location snake then
                     Present
                 else
                     Absent
@@ -263,7 +286,7 @@ view model =
             else
                 div [ style [ ( "display", "flex" ), ( "padding", "25px" ) ] ] [ table [] cells ]
     in
-    div [] [ div [] [ h3 [ style [ ( "padding-bottom", "5px" ) ] ] [] ], board, reset ]
+        div [] [ div [] [ h3 [ style [ ( "padding-bottom", "5px" ) ] ] [] ], board, reset ]
 
 
 
