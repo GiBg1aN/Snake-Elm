@@ -159,8 +159,14 @@ update msg model =
 
         KeyboardMsg move ->
             let
+                pKeys =
+                    Keyboard.Extra.update move model.pressedKeys
+
                 dir =
-                    arrowsDirection <| Keyboard.Extra.update move model.pressedKeys
+                    if List.length pKeys == 1 then
+                        arrowsDirection <| pKeys
+                    else
+                        arrowsDirection <| List.drop (List.length pKeys - 1) pKeys
 
                 new_snake =
                     updateSnake model.snake dir model.board model
