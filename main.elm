@@ -8,6 +8,11 @@ import Matrix exposing (..)
 import Random exposing (Generator, int, pair)
 
 
+--TODO: HANDLE RANDOM SPAWN ON THE SNAKE
+--TODO: OPTIMIZE FUNCTION PARAMETERS
+--TODO: RENAME FUNCTION PARAMETERS
+
+
 main : Program Never Model Msg
 main =
     Html.program
@@ -58,9 +63,9 @@ type Msg
 
 model : ( Model, Cmd Msg )
 model =
-    ( { board = initMatrix 10 10 (1,1)
+    ( { board = initMatrix 10 10 ( 1, 1 ) initSnake
       , status = Moving
-      , snake = initSnake 5
+      , snake = initSnake
       , pressedKeys = []
       , lastMove = West
       , foodGenerator = ( 1, 1 )
@@ -69,17 +74,17 @@ model =
     )
 
 
-initMatrix : Int -> Int -> Location -> Matrix Cell
-initMatrix m n foodLocation =
-    Matrix.matrix m n (\loc -> Absent) |> Matrix.set foodLocation Present
+initMatrix : Int -> Int -> Location -> Snake -> Board
+initMatrix m n foodLocation snake =
+    Matrix.matrix m n (\loc -> Absent) |> Matrix.set foodLocation Present >> addSnake snake foodLocation
 
 
 
 -- still a dummy function
 
 
-initSnake : Int -> Snake
-initSnake n =
+initSnake : Snake
+initSnake =
     [ ( 3, 3 ), ( 3, 4 ), ( 3, 5 ) ]
 
 
@@ -174,7 +179,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Reset ->
-            ( { model | board = initMatrix 10 10 (1,1), status = Moving, snake = initSnake 5, pressedKeys = [] }, Cmd.none )
+            ( { model | board = initMatrix 10 10 ( 1, 1 ) initSnake, status = Moving, snake = initSnake, pressedKeys = [] }, Cmd.none )
 
         KeyboardMsg move ->
             let
@@ -193,13 +198,16 @@ update msg model =
             if model.status /= Lost then
                 case new_snake of
                     Just (x :: xs) ->
-                        let newMsg = isEaten model.snake (x::xs) in
+                        let
+                            newMsg =
+                                isEaten model.snake (x :: xs)
+                        in
                         if isbackwardColliding model.snake (x :: xs) then
-                            ( model,  newMsg )
+                            ( model, newMsg )
                         else if isFailed x xs then
                             ( { model | status = Lost, pressedKeys = Keyboard.Extra.update move model.pressedKeys, lastMove = dir }, newMsg )
                         else
-                            ( { model | snake = x :: xs, pressedKeys = Keyboard.Extra.update move model.pressedKeys }, newMsg )
+                            ( { model | board = addSnake (x :: xs) model.foodGenerator model.board, snake = x :: xs, pressedKeys = Keyboard.Extra.update move model.pressedKeys }, newMsg )
 
                     Just [] ->
                         Debug.crash "EMPTY SNAKE" ( model, Cmd.none )
@@ -210,7 +218,7 @@ update msg model =
                 ( { model | pressedKeys = [] }, Cmd.none )
 
         NewFood f ->
-            ( { model | foodGenerator = f, board = Matrix.set f Present model.board}, Cmd.none )
+            ( { model | foodGenerator = f, board = Matrix.set f Present model.board }, Cmd.none )
 
 
 
@@ -227,8 +235,8 @@ renderCell p =
             td [ style [ ( "margin", "5px" ), ( "padding", "30px" ), ( "width", "5px" ), ( "height", "5px" ), ( "background-color", "grey" ) ] ] []
 
 
-addSnake : Snake -> Board -> Board
-addSnake s m =
+addSnake : Snake -> Location -> Board -> Board
+addSnake s food m =
     m
         |> Matrix.mapWithLocation
             (\lct c ->
@@ -237,6 +245,7 @@ addSnake s m =
                 else
                     Absent
             )
+        >> Matrix.set food Present
 
 
 view : Model -> Html Msg
@@ -246,7 +255,7 @@ view model =
             div [] [ button [ onClick Reset, class "btn" ] [ text "Reset" ] ]
 
         cells =
-            model.board |> addSnake model.snake >> Matrix.map (\c -> renderCell c) >> Matrix.toList >> List.map (\r -> tr [] r)
+            model.board |> Matrix.map (\c -> renderCell c) >> Matrix.toList >> List.map (\r -> tr [] r)
 
         board =
             if model.status == Lost then
