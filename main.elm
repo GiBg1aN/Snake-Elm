@@ -17,6 +17,7 @@ main =
         }
 
 
+
 --MODEL
 
 
@@ -24,7 +25,8 @@ type alias Model =
     { board : Board
     , status : Status
     , snake : Snake
-    , lastMove : List Key
+    , pressedKeys : List Key
+    , lastMove : Direction
     }
 
 
@@ -51,9 +53,9 @@ type Msg
     | KeyboardMsg Keyboard.Extra.Msg
 
 
-model : (Model, Cmd Msg)
+model : ( Model, Cmd Msg )
 model =
-    ({ board = initMatrix 10 10, status = Moving, snake = initSnake 5, lastMove = [] }, Cmd.none)
+    ( { board = initMatrix 10 10, status = Moving, snake = initSnake 5, pressedKeys = [], lastMove = West }, Cmd.none )
 
 
 initMatrix : Int -> Int -> Matrix Cell
@@ -70,33 +72,38 @@ initSnake n =
     [ ( 3, 3 ), ( 3, 4 ), ( 3, 5 ) ]
 
 
-updateSnake : Snake -> Direction -> Board -> Maybe Snake
-updateSnake l d m =
-    case List.head l of
-        Just x ->
-            let
-                ( i, j ) =
-                    x
-            in
+parseHead : Direction -> Location -> Model -> Location
+parseHead d l model =
+    let
+        ( i, j ) =
+            l
+    in
+        case d of
+            North ->
+                ( (i - 1) % 10, j )
+
+            South ->
+                ( (i + 1) % 10, j )
+
+            West ->
+                ( i, (j - 1) % 10 )
+
+            East ->
+                ( i, (j + 1) % 10 )
+
+            _ ->
+                Debug.crash "INVALID KEY"
+
+
+updateSnake : Snake -> Direction -> Board -> Model -> Maybe Snake
+updateSnake l d m model =
+    -- TODO: collapse model and board in a single argument
+    if d /= NoDirection then
+        case List.head l of
+            Just x ->
                 let
                     newHead =
-                        case d of
-                            North ->
-                                ( (i - 1) % 10, j )
-
-                            South ->
-                                ( (i + 1) % 10, j )
-
-                            West ->
-                                ( i, (j - 1) % 10 )
-
-                            East ->
-                                ( i, (j + 1) % 10 )
-
-                            NoDirection ->
-                                (i, j)
-                            _ ->
-                                Debug.crash "INVALID KEY"
+                        parseHead d x model
                 in
                     case Matrix.get newHead m of
                         Just Present ->
@@ -106,10 +113,12 @@ updateSnake l d m =
                             Just (newHead :: (l |> List.take (List.length l - 1)))
 
                         Nothing ->
-                            Nothing
+                            Debug.crash "OUT OF RANGE INDEX"
 
-        Nothing ->
-            Nothing
+            Nothing ->
+                Nothing
+    else
+        Just l
 
 
 isFailed : Location -> Snake -> Bool
@@ -129,34 +138,35 @@ isFailed c l =
 -- UPDATE
 
 
-update : Msg -> Model -> (Model,Cmd Msg)
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Reset ->
-            ({ model | board = initMatrix 10 10, status = Moving, snake = initSnake 5, lastMove = [] }, Cmd.none)
+            ( { model | board = initMatrix 10 10, status = Moving, snake = initSnake 5, pressedKeys = [] }, Cmd.none )
 
         KeyboardMsg move ->
             let
                 dir =
-                    Keyboard.Extra.update move model.lastMove
+                    arrowsDirection <| Keyboard.Extra.update move model.pressedKeys
 
                 new_snake =
-                    updateSnake model.snake (Debug.log "prova" (Keyboard.Extra.arrowsDirection dir)) model.board
+                    updateSnake model.snake dir model.board model
             in
-                case new_snake of
-                    Just l ->
-                        case l of
-                            x :: xs ->
-                                if isFailed x l then
-                                    ({ model | snake = l, status = Lost, lastMove = [] },Cmd.none)
-                                else
-                                    ({ model | snake = l, lastMove = dir },Cmd.none)
+                if model.status /= Lost then
+                    case new_snake of
+                        Just (x :: xs) ->
+                            if isFailed x xs then
+                                ( { model | status = Lost, pressedKeys = (Keyboard.Extra.update move model.pressedKeys), lastMove = dir }, Cmd.none )
+                            else
+                                ( { model | snake = x :: xs, pressedKeys = (Keyboard.Extra.update move model.pressedKeys) }, Cmd.none )
 
-                            _ ->
-                                (model, Cmd.none)
+                        Just [] ->
+                            Debug.crash "EMPTY SNAKE" ( model, Cmd.none )
 
-                    Nothing ->
-                        (model, Cmd.none)
+                        Nothing ->
+                            Debug.log "EMPTY NEWSNAKE" ( model, Cmd.none )
+                else
+                    ( { model | pressedKeys = [] }, Cmd.none )
 
 
 
@@ -202,7 +212,10 @@ view model =
     in
         div [] [ div [] [ h3 [ style [ ( "padding-bottom", "5px" ) ] ] [] ], board, reset ]
 
+
+
 -- SUBSCRIPTIONS
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
