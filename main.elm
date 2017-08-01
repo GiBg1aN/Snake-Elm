@@ -9,7 +9,6 @@ import Random exposing (Generator, int, pair)
 
 
 --TODO: HANDLE RANDOM SPAWN ON THE SNAKE
---TODO: OPTIMIZE FUNCTION PARAMETERS
 
 
 main : Program Never Model Msg
@@ -75,16 +74,25 @@ model =
 
 initMatrix : Int -> Int -> Location -> Snake -> Board
 initMatrix m n foodLocation snake =
-    Matrix.matrix m n (\location -> Absent) |> Matrix.set foodLocation Present >> addSnake snake foodLocation
-
-
-
--- still a dummy function
+    Matrix.matrix m n (\location -> Absent) |> Matrix.set foodLocation Present >> addSnakeAndFood snake foodLocation
 
 
 initSnake : Snake
 initSnake =
     [ ( 3, 3 ), ( 3, 4 ), ( 3, 5 ) ]
+
+
+addSnakeAndFood : Snake -> Location -> Board -> Board
+addSnakeAndFood snake food board =
+    board
+        |> Matrix.mapWithLocation
+            (\location c ->
+                if List.member location snake then
+                    Present
+                else
+                    Absent
+            )
+        |> Matrix.set food Present
 
 
 parseHead : Direction -> Location -> Model -> Location
@@ -123,22 +131,21 @@ isbackwardColliding oldSnake newSnake =
             False
 
 
-updateSnake : Snake -> Direction -> Board -> Model -> Maybe Snake
-updateSnake snake direction board model =
-    -- TODO: collapse model and board in a single argument
+updateSnake : Direction -> Model -> Maybe Snake
+updateSnake direction model =
     if direction /= NoDirection then
-        case List.head snake of
+        case List.head model.snake of
             Just x ->
                 let
                     newHead =
                         parseHead direction x model
                 in
-                    case Matrix.get newHead board of
+                    case Matrix.get newHead model.board of
                         Just Present ->
-                            Just (newHead :: snake)
+                            Just (newHead :: model.snake)
 
                         Just Absent ->
-                            Just (newHead :: (snake |> List.take (List.length snake - 1)))
+                            Just (newHead :: (model.snake |> List.take (List.length model.snake - 1)))
 
                         Nothing ->
                             Debug.crash "OUT OF RANGE INDEX"
@@ -146,7 +153,7 @@ updateSnake snake direction board model =
             Nothing ->
                 Nothing
     else
-        Just snake
+        Just model.snake
 
 
 isFailed : Location -> Snake -> Bool
@@ -199,7 +206,7 @@ update msg model =
                         arrowsDirection <| List.drop (List.length pressedKeys - 1) pressedKeys
 
                 newSnake =
-                    updateSnake model.snake direction model.board model
+                    updateSnake direction model
             in
                 if model.status /= Lost then
                     case newSnake of
@@ -220,7 +227,7 @@ update msg model =
                                     )
                                 else
                                     ( { model
-                                        | board = addSnake (x :: xs) model.foodLocation model.board
+                                        | board = addSnakeAndFood (x :: xs) model.foodLocation model.board
                                         , snake = x :: xs
                                         , pressedKeys = Keyboard.Extra.update move model.pressedKeys
                                       }
@@ -256,19 +263,6 @@ renderCell cell =
 
         Absent ->
             td [ style [ ( "margin", "5px" ), ( "padding", "30px" ), ( "width", "5px" ), ( "height", "5px" ), ( "background-color", "grey" ) ] ] []
-
-
-addSnake : Snake -> Location -> Board -> Board
-addSnake snake food board =
-    board
-        |> Matrix.mapWithLocation
-            (\location c ->
-                if List.member location snake then
-                    Present
-                else
-                    Absent
-            )
-        >> Matrix.set food Present
 
 
 view : Model -> Html Msg
