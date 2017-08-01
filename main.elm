@@ -9,9 +9,6 @@ import Matrix exposing (..)
 import Random exposing (Generator, int, pair)
 
 
---TODO: HANDLE RANDOM SPAWN ON THE SNAKE
-
-
 main : Program Never Model Msg
 main =
     Html.program
@@ -175,7 +172,7 @@ isEaten oldSnake newSnake =
     if List.length oldSnake == (ListE.unique >> List.length <| newSnake) then
         Cmd.none
     else
-        Random.generate Food <| pair (int 0 10) (int 0 10)
+        Random.generate Food <| pair (int 0 9) (int 0 9)
 
 
 
@@ -244,12 +241,15 @@ update msg model =
                     ( { model | pressedKeys = [] }, Cmd.none )
 
         Food food ->
-            ( { model
-                | foodLocation = food
-                , board = Matrix.set food Present model.board
-              }
-            , Cmd.none
-            )
+            if List.member food model.snake then
+                ( model, Random.generate Food <| pair (int 0 9) (int 0 9) )
+            else
+                ( { model
+                    | foodLocation = food
+                    , board = Matrix.set food Present model.board
+                  }
+                , Cmd.none
+                )
 
 
 
