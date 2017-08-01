@@ -1,10 +1,11 @@
 module Main exposing (..)
 
-import Matrix exposing (..)
 import Html exposing (..)
-import Html.Events exposing (..)
 import Html.Attributes exposing (..)
-import Keyboard.Extra exposing (Key, Direction(..), arrowsDirection)
+import Html.Events exposing (..)
+import Keyboard.Extra exposing (Direction(..), Key, arrowsDirection)
+import Matrix exposing (..)
+import Random exposing (Generator, int, pair)
 
 
 main : Program Never Model Msg
@@ -27,6 +28,7 @@ type alias Model =
     , snake : Snake
     , pressedKeys : List Key
     , lastMove : Direction
+    , foodGenerator : Location
     }
 
 
@@ -51,16 +53,25 @@ type alias Snake =
 type Msg
     = Reset
     | KeyboardMsg Keyboard.Extra.Msg
+    | NewFood Location
 
 
 model : ( Model, Cmd Msg )
 model =
-    ( { board = initMatrix 10 10, status = Moving, snake = initSnake 5, pressedKeys = [], lastMove = West }, Cmd.none )
+    ( { board = initMatrix 10 10 (1,1)
+      , status = Moving
+      , snake = initSnake 5
+      , pressedKeys = []
+      , lastMove = West
+      , foodGenerator = ( 1, 1 )
+      }
+    , Cmd.none
+    )
 
 
-initMatrix : Int -> Int -> Matrix Cell
-initMatrix m n =
-    Matrix.matrix m n (\loc -> Absent)
+initMatrix : Int -> Int -> Location -> Matrix Cell
+initMatrix m n foodLocation =
+    Matrix.matrix m n (\loc -> Absent) |> Matrix.set foodLocation Present
 
 
 
@@ -78,21 +89,21 @@ parseHead d l model =
         ( i, j ) =
             l
     in
-        case d of
-            North ->
-                ( (i - 1) % 10, j )
+    case d of
+        North ->
+            ( (i - 1) % 10, j )
 
-            South ->
-                ( (i + 1) % 10, j )
+        South ->
+            ( (i + 1) % 10, j )
 
-            West ->
-                ( i, (j - 1) % 10 )
+        West ->
+            ( i, (j - 1) % 10 )
 
-            East ->
-                ( i, (j + 1) % 10 )
+        East ->
+            ( i, (j + 1) % 10 )
 
-            _ ->
-                Debug.crash "INVALID KEY"
+        _ ->
+            Debug.crash "INVALID KEY"
 
 
 isbackwardColliding : Snake -> Snake -> Bool
@@ -118,15 +129,15 @@ updateSnake l d m model =
                     newHead =
                         parseHead d x model
                 in
-                    case Matrix.get newHead m of
-                        Just Present ->
-                            Just (newHead :: l)
+                case Matrix.get newHead m of
+                    Just Present ->
+                        Just (newHead :: l)
 
-                        Just Absent ->
-                            Just (newHead :: (l |> List.take (List.length l - 1)))
+                    Just Absent ->
+                        Just (newHead :: (l |> List.take (List.length l - 1)))
 
-                        Nothing ->
-                            Debug.crash "OUT OF RANGE INDEX"
+                    Nothing ->
+                        Debug.crash "OUT OF RANGE INDEX"
 
             Nothing ->
                 Nothing
@@ -147,6 +158,14 @@ isFailed c l =
             False
 
 
+isEaten : Snake -> Snake -> Cmd Msg
+isEaten s1 s2 =
+    if List.length s1 == List.length s2 then
+        Cmd.none
+    else
+        Random.generate NewFood <| pair (int 0 10) (int 0 10)
+
+
 
 -- UPDATE
 
@@ -155,7 +174,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Reset ->
-            ( { model | board = initMatrix 10 10, status = Moving, snake = initSnake 5, pressedKeys = [] }, Cmd.none )
+            ( { model | board = initMatrix 10 10 (1,1), status = Moving, snake = initSnake 5, pressedKeys = [] }, Cmd.none )
 
         KeyboardMsg move ->
             let
@@ -171,23 +190,27 @@ update msg model =
                 new_snake =
                     updateSnake model.snake dir model.board model
             in
-                if model.status /= Lost then
-                    case new_snake of
-                        Just (x :: xs) ->
-                            if isbackwardColliding model.snake (x :: xs) then
-                                ( model, Cmd.none )
-                            else if isFailed x xs then
-                                ( { model | status = Lost, pressedKeys = (Keyboard.Extra.update move model.pressedKeys), lastMove = dir }, Cmd.none )
-                            else
-                                ( { model | snake = x :: xs, pressedKeys = (Keyboard.Extra.update move model.pressedKeys) }, Cmd.none )
+            if model.status /= Lost then
+                case new_snake of
+                    Just (x :: xs) ->
+                        let newMsg = isEaten model.snake (x::xs) in
+                        if isbackwardColliding model.snake (x :: xs) then
+                            ( model,  newMsg )
+                        else if isFailed x xs then
+                            ( { model | status = Lost, pressedKeys = Keyboard.Extra.update move model.pressedKeys, lastMove = dir }, newMsg )
+                        else
+                            ( { model | snake = x :: xs, pressedKeys = Keyboard.Extra.update move model.pressedKeys }, newMsg )
 
-                        Just [] ->
-                            Debug.crash "EMPTY SNAKE" ( model, Cmd.none )
+                    Just [] ->
+                        Debug.crash "EMPTY SNAKE" ( model, Cmd.none )
 
-                        Nothing ->
-                            Debug.log "EMPTY NEWSNAKE" ( model, Cmd.none )
-                else
-                    ( { model | pressedKeys = [] }, Cmd.none )
+                    Nothing ->
+                        Debug.log "EMPTY NEWSNAKE" ( model, Cmd.none )
+            else
+                ( { model | pressedKeys = [] }, Cmd.none )
+
+        NewFood f ->
+            ( { model | foodGenerator = f, board = Matrix.set f Present model.board}, Cmd.none )
 
 
 
@@ -223,7 +246,7 @@ view model =
             div [] [ button [ onClick Reset, class "btn" ] [ text "Reset" ] ]
 
         cells =
-            model.board |> (addSnake model.snake) >> (Matrix.map (\c -> renderCell c)) >> Matrix.toList >> (List.map (\r -> tr [] r))
+            model.board |> addSnake model.snake >> Matrix.map (\c -> renderCell c) >> Matrix.toList >> List.map (\r -> tr [] r)
 
         board =
             if model.status == Lost then
@@ -231,7 +254,7 @@ view model =
             else
                 div [ style [ ( "display", "flex" ), ( "padding", "25px" ) ] ] [ table [] cells ]
     in
-        div [] [ div [] [ h3 [ style [ ( "padding-bottom", "5px" ) ] ] [] ], board, reset ]
+    div [] [ div [] [ h3 [ style [ ( "padding-bottom", "5px" ) ] ] [] ], board, reset ]
 
 
 
