@@ -95,6 +95,19 @@ parseHead d l model =
                 Debug.crash "INVALID KEY"
 
 
+isbackwardColliding : Snake -> Snake -> Bool
+isbackwardColliding oldS newS =
+    case ( oldS, newS ) of
+        ( x :: xx :: xs, y :: ys ) ->
+            if xx == y then
+                True
+            else
+                False
+
+        ( _, _ ) ->
+            False
+
+
 updateSnake : Snake -> Direction -> Board -> Model -> Maybe Snake
 updateSnake l d m model =
     -- TODO: collapse model and board in a single argument
@@ -155,7 +168,9 @@ update msg model =
                 if model.status /= Lost then
                     case new_snake of
                         Just (x :: xs) ->
-                            if isFailed x xs then
+                            if isbackwardColliding model.snake (x :: xs) then
+                                ( model, Cmd.none )
+                            else if isFailed x xs then
                                 ( { model | status = Lost, pressedKeys = (Keyboard.Extra.update move model.pressedKeys), lastMove = dir }, Cmd.none )
                             else
                                 ( { model | snake = x :: xs, pressedKeys = (Keyboard.Extra.update move model.pressedKeys) }, Cmd.none )
