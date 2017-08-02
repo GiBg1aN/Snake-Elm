@@ -7,6 +7,7 @@ import Keyboard.Extra as KE exposing (Direction(..), Key, arrowsDirection)
 import List.Extra as ListE exposing (..)
 import Matrix exposing (..)
 import Random exposing (Generator, int, pair)
+import Time exposing (..)
 
 
 main : Program Never Model Msg
@@ -55,6 +56,7 @@ type Msg
     = Reset
     | KeyboardMsg KE.Msg
     | Food Location
+    | Tick Time
 
 
 model : ( Model, Cmd Msg )
@@ -251,6 +253,9 @@ update msg model =
                 , Cmd.none
                 )
 
+        Tick tick ->
+            model ! []
+
 
 
 -- VIEW
@@ -290,4 +295,4 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.map KeyboardMsg KE.subscriptions
+    Sub.batch [ Sub.map KeyboardMsg KE.subscriptions, Time.every Time.second Tick ]
