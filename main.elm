@@ -13,7 +13,7 @@ import Time exposing (..)
 main : Program Never Model Msg
 main =
     Html.program
-        { init = model
+        { init = init
         , update = update
         , view = view
         , subscriptions = subscriptions
@@ -59,9 +59,9 @@ type Msg
     | Tick Time
 
 
-model : ( Model, Cmd Msg )
-model =
-    ( { board = initMatrix 10 10 ( 1, 1 ) initSnake
+init : ( Model, Cmd Msg )
+init =
+    ( { board = initMatrix
       , status = Moving
       , snake = initSnake
       , pressedKeys = []
@@ -72,9 +72,9 @@ model =
     )
 
 
-initMatrix : Int -> Int -> Location -> Snake -> Board
-initMatrix m n foodLocation snake =
-    Matrix.matrix m n (\location -> Absent) |> Matrix.set foodLocation Present >> addSnakeAndFood snake foodLocation
+initMatrix : Board
+initMatrix =
+    Matrix.matrix 10 10 (\location -> Absent) |> Matrix.set ( 1, 1 ) Present >> addSnakeAndFood initSnake ( 1, 1 )
 
 
 initSnake : Snake
@@ -181,18 +181,36 @@ isEaten oldSnake newSnake =
 -- UPDATE
 
 
+moveSnake : Direction -> Model -> ( Model, Cmd Msg )
+moveSnake direction model =
+    if model.status /= Lost then
+        case updateSnake direction model of
+            Just (x :: xs) ->
+                let
+                    newMessage =
+                        isEaten model.snake (x :: xs)
+                in
+                    if isbackwardColliding model.snake (x :: xs) then
+                        ( model, newMessage )
+                    else if isFailed x xs then
+                        ( { model | status = Lost, lastMove = direction }, newMessage )
+                    else
+                        ( { model | board = addSnakeAndFood (x :: xs) model.foodLocation model.board, snake = x :: xs }, newMessage )
+
+            Just [] ->
+                Debug.crash "EMPTY SNAKE" ( model, Cmd.none )
+
+            Nothing ->
+                Debug.log "EMPTY NEWSnakeNAKE" ( model, Cmd.none )
+    else
+        ( { model | pressedKeys = [] }, Cmd.none )
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Reset ->
-            ( { model
-                | board = initMatrix 10 10 ( 1, 1 ) initSnake
-                , status = Moving
-                , snake = initSnake
-                , pressedKeys = []
-              }
-            , Cmd.none
-            )
+            ( { model | board = initMatrix, status = Moving, snake = initSnake, pressedKeys = [] }, Cmd.none )
 
         KeyboardMsg move ->
             let
@@ -204,54 +222,18 @@ update msg model =
                         arrowsDirection <| pressedKeys
                     else
                         arrowsDirection <| List.drop (List.length pressedKeys - 1) pressedKeys
-
-                newSnake =
-                    updateSnake direction model
             in
-                if model.status /= Lost then
-                    case newSnake of
-                        Just (x :: xs) ->
-                            let
-                                newMessage =
-                                    isEaten model.snake (x :: xs)
-                            in
-                                if isbackwardColliding model.snake (x :: xs) then
-                                    ( model, newMessage )
-                                else if isFailed x xs then
-                                    ( { model
-                                        | status = Lost
-                                        , pressedKeys = KE.update move model.pressedKeys
-                                        , lastMove = direction
-                                      }
-                                    , newMessage
-                                    )
-                                else
-                                    ( { model
-                                        | board = addSnakeAndFood (x :: xs) model.foodLocation model.board
-                                        , snake = x :: xs
-                                        , pressedKeys = KE.update move model.pressedKeys
-                                      }
-                                    , newMessage
-                                    )
-
-                        Just [] ->
-                            Debug.crash "EMPTY SNAKE" ( model, Cmd.none )
-
-                        Nothing ->
-                            Debug.log "EMPTY NEWSnakeNAKE" ( model, Cmd.none )
-                else
-                    ( { model | pressedKeys = [] }, Cmd.none )
+                let
+                    ( newModel, newCmd ) =
+                        moveSnake direction model
+                in
+                    ( { newModel | pressedKeys = pressedKeys }, newCmd )
 
         Food food ->
             if List.member food model.snake then
                 ( model, Random.generate Food <| pair (int 0 9) (int 0 9) )
             else
-                ( { model
-                    | foodLocation = food
-                    , board = Matrix.set food Present model.board
-                  }
-                , Cmd.none
-                )
+                ( { model | foodLocation = food, board = Matrix.set food Present model.board }, Cmd.none )
 
         Tick tick ->
             model ! []
