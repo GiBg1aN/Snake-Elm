@@ -189,13 +189,19 @@ moveSnake direction model =
                 let
                     newMessage =
                         isEaten model.snake (x :: xs)
+
+                    lastMove =
+                        if direction /= NoDirection then
+                            direction
+                        else
+                            model.lastMove
                 in
                     if isbackwardColliding model.snake (x :: xs) then
                         ( model, newMessage )
                     else if isFailed x xs then
                         ( { model | status = Lost, lastMove = direction }, newMessage )
                     else
-                        ( { model | board = addSnakeAndFood (x :: xs) model.foodLocation model.board, snake = x :: xs }, newMessage )
+                        ( { model | board = addSnakeAndFood (x :: xs) model.foodLocation model.board, snake = x :: xs, lastMove = lastMove }, newMessage )
 
             Just [] ->
                 Debug.crash "EMPTY SNAKE" ( model, Cmd.none )
@@ -236,7 +242,7 @@ update msg model =
                 ( { model | foodLocation = food, board = Matrix.set food Present model.board }, Cmd.none )
 
         Tick tick ->
-            model ! []
+            moveSnake model.lastMove model
 
 
 
