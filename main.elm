@@ -253,10 +253,10 @@ renderCell : Cell -> Html msg
 renderCell cell =
     case cell of
         Present ->
-            td [ style [ ( "margin", "5px" ), ( "padding", "30px" ), ( "width", "5px" ), ( "height", "5px" ), ( "background-color", "black" ) ] ] []
+            td [ class "cell", style [ ( "padding", "25px" ), ( "width", "5px" ), ( "height", "5px" ), ( "background-color", "black" ) ] ] []
 
         Absent ->
-            td [ style [ ( "margin", "5px" ), ( "padding", "30px" ), ( "width", "5px" ), ( "height", "5px" ), ( "background-color", "grey" ) ] ] []
+            td [ class "cell", style [ ( "padding", "25px" ), ( "width", "5px" ), ( "height", "5px" ), ( "background-color", "grey" ) ] ] []
 
 
 view : Model -> Html Msg
@@ -270,11 +270,11 @@ view model =
 
         board =
             if model.status == Lost then
-                div [ style [ ( "display", "flex" ), ( "padding", "20px" ) ] ] [ h1 [] [ text "You Lost!" ] ]
+                div [ style [ ( "display", "flex" ), ( "padding", "200px" ) ] ] [ h1 [] [ text "You Lost!" ] ]
             else
-                div [ style [ ( "display", "flex" ), ( "padding", "25px" ) ] ] [ table [] cells ]
+                div [ style [ ( "display", "flex" ) ] ] [ table [] cells ]
     in
-        div [] [ div [] [ h3 [ style [ ( "padding-bottom", "5px" ) ] ] [] ], board, reset ]
+        div [] [ div [] [ (h1 [] [ text "Snake" ]), (h3 [ style [ ( "padding-bottom", "10px" ) ] ] [ text "Made with Elm" ]) ], board, reset ]
 
 
 
