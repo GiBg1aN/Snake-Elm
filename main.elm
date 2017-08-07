@@ -148,7 +148,7 @@ updateSnake direction model =
                             Just (newHead :: (model.snake |> List.take (List.length model.snake - 1)))
 
                         Nothing ->
-                            Debug.crash "OUT OF RANGE INDEX"
+                            Nothing
 
             Nothing ->
                 Nothing
@@ -175,6 +175,14 @@ isEaten oldSnake newSnake =
         Cmd.none
     else
         Random.generate Food <| pair (int 0 9) (int 0 9)
+
+
+resizeKeysList : List Key -> Direction
+resizeKeysList keys =
+    if List.length keys == 1 then
+        arrowsDirection <| keys
+    else
+        arrowsDirection <| List.drop (List.length keys - 1) keys
 
 
 
@@ -204,42 +212,49 @@ moveSnake direction model =
                         ( { model | board = addSnakeAndFood (x :: xs) model.foodLocation model.board, snake = x :: xs, lastMove = lastMove }, newMessage )
 
             Just [] ->
-                Debug.crash "EMPTY SNAKE" ( model, Cmd.none )
+                ( model, Cmd.none )
 
             Nothing ->
-                Debug.log "EMPTY NEWSnakeNAKE" ( model, Cmd.none )
+                ( model, Cmd.none )
     else
         ( { model | pressedKeys = [] }, Cmd.none )
+
+
+handleKeyBoardMsg : KE.Msg -> Model -> ( Model, Cmd Msg )
+handleKeyBoardMsg move model =
+    let
+        pressedKeys =
+            KE.update move model.pressedKeys
+
+        direction =
+            resizeKeysList pressedKeys
+    in
+        let
+            ( newModel, newCmd ) =
+                moveSnake direction model
+        in
+            ( { newModel | pressedKeys = pressedKeys }, newCmd )
+
+
+handleFoodMsg : Location -> Model -> ( Model, Cmd Msg )
+handleFoodMsg food model =
+    if List.member food model.snake then
+        ( model, Random.generate Food <| pair (int 0 9) (int 0 9) )
+    else
+        ( { model | foodLocation = food, board = Matrix.set food Present model.board }, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Reset ->
-            ( { model | board = initMatrix, status = Moving, snake = initSnake, pressedKeys = [] }, Cmd.none )
+            init
 
         KeyboardMsg move ->
-            let
-                pressedKeys =
-                    KE.update move model.pressedKeys
-
-                direction =
-                    if List.length pressedKeys == 1 then
-                        arrowsDirection <| pressedKeys
-                    else
-                        arrowsDirection <| List.drop (List.length pressedKeys - 1) pressedKeys
-            in
-                let
-                    ( newModel, newCmd ) =
-                        moveSnake direction model
-                in
-                    ( { newModel | pressedKeys = pressedKeys }, newCmd )
+            handleKeyBoardMsg move model
 
         Food food ->
-            if List.member food model.snake then
-                ( model, Random.generate Food <| pair (int 0 9) (int 0 9) )
-            else
-                ( { model | foodLocation = food, board = Matrix.set food Present model.board }, Cmd.none )
+            handleFoodMsg food model
 
         Tick tick ->
             moveSnake model.lastMove model
