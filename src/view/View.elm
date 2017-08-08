@@ -1,30 +1,27 @@
 module View exposing (..)
 
-
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (..)
-import Matrix exposing (..)
+
 
 --
 
+import Cells
 import Model exposing (..)
-import Status exposing (..)
-import View.Utils exposing (renderCell)
+import ResetButton
+import MainContent
+
 
 view : Model -> Html Msg
 view model =
     let
         reset =
-            div [] [ button [ onClick Reset, class "btn" ] [ text "Reset" ] ]
+            ResetButton.view model
 
         cells =
-            model.board |> Matrix.map (\c -> renderCell c) >> Matrix.toList >> List.map (\r -> tr [] r)
+            Cells.view model
 
         board =
-            if model.status == Lost then
-                div [ style [ ( "display", "flex" ), ( "padding", "200px" ) ] ] [ h1 [] [ text "You Lost!" ] ]
-            else
-                div [ style [ ( "display", "flex" ) ] ] [ table [] cells ]
+            MainContent.view model cells
     in
         div [] [ div [] [ (h1 [] [ text "Snake" ]), (h3 [ style [ ( "padding-bottom", "10px" ) ] ] [ text "Made with Elm" ]) ], board, reset ]
