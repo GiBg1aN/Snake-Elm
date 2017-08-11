@@ -7,7 +7,7 @@ import Matrix exposing (..)
 --
 
 import Model exposing (..)
-import View.Utils exposing (renderCell)
+import ViewUtils exposing (renderCell)
 
 
 view : Model -> List (Html Msg)

@@ -1,4 +1,4 @@
-module Update.Utils exposing (handleKeyBoardMsg, handleFoodMsg, moveSnake)
+module UpdateUtils exposing (handleKeyBoardMsg, handleFoodMsg, moveSnake)
 
 import Keyboard.Extra as KE exposing (Direction(..), Key, arrowsDirection)
 import Matrix exposing (..)
