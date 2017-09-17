@@ -43,10 +43,10 @@ moveSnake : Direction -> Model -> ( Model, Cmd Msg )
 moveSnake direction model =
     if model.status /= Lost then
         case updateSnake direction model of
-            Just (x :: xs) ->
+            Just xs ->
                 let
                     newMessage =
-                        isEaten model.snake (x :: xs)
+                        isEaten model.snake xs
 
                     lastMove =
                         if direction /= NoDirection then
@@ -54,13 +54,11 @@ moveSnake direction model =
                         else
                             model.lastMove
                 in
-                    if x :: xs == model.snake then
+                    if xs == model.snake then
                         ( model, newMessage )
                     else
-                        ( { model | board = addSnakeAndFood (x :: xs) model.foodLocation model.board, snake = x :: xs, lastMove = lastMove }, newMessage )
+                        ( { model | board = addSnakeAndFood xs model.foodLocation model.board, snake = xs, lastMove = lastMove }, newMessage )
 
-            Just [] ->
-                ( model, Cmd.none )
 
             Nothing ->
                 ( { model | status = Lost }, Cmd.none )
@@ -71,14 +69,14 @@ moveSnake direction model =
 resizeKeysList : List Key -> Direction
 resizeKeysList keys =
     if List.length keys == 1 then
-        arrowsDirection <| keys
+        arrowsDirection keys
     else
         arrowsDirection <| List.drop (List.length keys - 1) keys
 
 
 isEaten : Snake -> Snake -> Cmd Msg
 isEaten oldSnake newSnake =
-    if List.length oldSnake == (ListE.unique >> List.length <| newSnake) then
+    if List.length oldSnake == List.length newSnake then
         Cmd.none
     else
         Random.generate Food <| pair (int 0 9) (int 0 9)
@@ -95,15 +93,15 @@ updateSnake direction model =
                 in
                     case Matrix.get newHead model.board of
                         Just PresentFood ->
-                            Just (newHead :: model.snake)
+                            Just <| newHead :: model.snake
 
                         Just Absent ->
-                            Just (newHead :: (model.snake |> List.take (List.length model.snake - 1)))
+                            ListE.init <| newHead :: model.snake
 
                         Just PresentSnake ->
                             case model.snake of
-                                y :: yy :: ys ->
-                                    if x == y then
+                                _ :: y :: _ ->
+                                    if newHead == y then
                                         Just model.snake
                                     else
                                         Nothing

@@ -16,5 +16,5 @@ update msg model =
         Food food ->
             Utils.handleFoodMsg food model
 
-        Tick tick ->
+        Tick _ ->
             Utils.moveSnake model.lastMove model
