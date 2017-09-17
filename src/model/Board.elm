@@ -15,7 +15,7 @@ type alias Board =
 
 initMatrix : Board
 initMatrix =
-    Matrix.matrix 10 10 (\location -> Absent) |> Matrix.set ( 1, 1 ) Present >> addSnakeAndFood initSnake ( 1, 1 )
+    Matrix.matrix 10 10 (\location -> Absent) |> Matrix.set ( 1, 1 ) PresentFood >> addSnakeAndFood initSnake ( 1, 1 )
 
 
 addSnakeAndFood : Snake -> Location -> Board -> Board
@@ -24,8 +24,8 @@ addSnakeAndFood snake food board =
         |> Matrix.mapWithLocation
             (\location c ->
                 if List.member location snake then
-                    Present
+                    PresentSnake
                 else
                     Absent
             )
-        |> Matrix.set food Present
+        |> Matrix.set food PresentFood

@@ -2,5 +2,6 @@ module Cell exposing (..)
 
 
 type Cell
-    = Present
+    = PresentSnake
+    | PresentFood
     | Absent

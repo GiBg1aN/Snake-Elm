@@ -36,7 +36,7 @@ handleFoodMsg food model =
     if List.member food model.snake then
         ( model, Random.generate Food <| pair (int 0 9) (int 0 9) )
     else
-        ( { model | foodLocation = food, board = Matrix.set food Present model.board }, Cmd.none )
+        ( { model | foodLocation = food, board = Matrix.set food PresentFood model.board }, Cmd.none )
 
 
 moveSnake : Direction -> Model -> ( Model, Cmd Msg )
@@ -54,10 +54,8 @@ moveSnake direction model =
                         else
                             model.lastMove
                 in
-                    if isbackwardColliding model.snake (x :: xs) then
+                    if x :: xs == model.snake then
                         ( model, newMessage )
-                    else if isFailed x xs then
-                        ( { model | status = Lost, lastMove = direction }, newMessage )
                     else
                         ( { model | board = addSnakeAndFood (x :: xs) model.foodLocation model.board, snake = x :: xs, lastMove = lastMove }, newMessage )
 
@@ -65,7 +63,7 @@ moveSnake direction model =
                 ( model, Cmd.none )
 
             Nothing ->
-                ( model, Cmd.none )
+                ( { model | status = Lost }, Cmd.none )
     else
         ( { model | pressedKeys = [] }, Cmd.none )
 
@@ -76,32 +74,6 @@ resizeKeysList keys =
         arrowsDirection <| keys
     else
         arrowsDirection <| List.drop (List.length keys - 1) keys
-
-
-isFailed : Location -> Snake -> Bool
-isFailed location snake =
-    case snake of
-        x :: xs ->
-            if x == location then
-                True
-            else
-                isFailed location xs
-
-        [] ->
-            False
-
-
-isbackwardColliding : Snake -> Snake -> Bool
-isbackwardColliding oldSnake newSnake =
-    case ( oldSnake, newSnake ) of
-        ( x :: xx :: xs, y :: ys ) ->
-            if xx == y then
-                True
-            else
-                False
-
-        ( _, _ ) ->
-            False
 
 
 isEaten : Snake -> Snake -> Cmd Msg
@@ -122,11 +94,22 @@ updateSnake direction model =
                         parseHead direction x model
                 in
                     case Matrix.get newHead model.board of
-                        Just Present ->
+                        Just PresentFood ->
                             Just (newHead :: model.snake)
 
                         Just Absent ->
                             Just (newHead :: (model.snake |> List.take (List.length model.snake - 1)))
+
+                        Just PresentSnake ->
+                            case model.snake of
+                                y :: yy :: ys ->
+                                    if x == y then
+                                        Just model.snake
+                                    else
+                                        Nothing
+
+                                _ ->
+                                    Nothing
 
                         Nothing ->
                             Nothing
