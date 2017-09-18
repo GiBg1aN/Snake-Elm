@@ -27,6 +27,10 @@ handleKeyBoardMsg move model =
     ( { newModel | pressedKeys = pressedKeys }, newCmd )
 
 
+
+-- Checks that the new food will be spawned in an empty cell.
+
+
 handleFoodMsg : Location -> Model -> ( Model, Cmd Msg )
 handleFoodMsg food model =
     if List.member food model.snake then
@@ -59,6 +63,10 @@ moveSnake direction model =
                 ( { model | status = Lost }, Cmd.none )
     else
         ( { model | pressedKeys = [] }, Cmd.none )
+
+
+
+-- Flushes the key list to avoid multiple keys pressed.
 
 
 resizeKeysList : List Key -> Direction
@@ -96,6 +104,7 @@ updateSnake direction model =
                     Just PresentSnake ->
                         case model.snake of
                             _ :: y :: _ ->
+                                -- Inhibits the snake to go backwards.
                                 if newHead == y then
                                     Just model.snake
                                 else
