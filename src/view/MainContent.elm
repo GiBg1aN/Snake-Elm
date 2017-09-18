@@ -2,10 +2,6 @@ module MainContent exposing (view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-
-
---
-
 import Model exposing (..)
 import Status exposing (..)
 

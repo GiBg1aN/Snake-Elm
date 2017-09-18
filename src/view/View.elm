@@ -1,15 +1,11 @@
 module View exposing (..)
 
+import Cells
 import Html exposing (..)
 import Html.Attributes exposing (..)
-
-
---
-
-import Cells
+import MainContent
 import Model exposing (..)
 import ResetButton
-import MainContent
 
 
 view : Model -> Html Msg
@@ -24,4 +20,4 @@ view model =
         board =
             MainContent.view model cells
     in
-        div [] [ div [] [ (h1 [] [ text "Snake" ]), (h3 [ style [ ( "padding-bottom", "10px" ) ] ] [ text "Made with Elm" ]) ], board, reset ]
+    div [] [ div [] [ h1 [] [ text "Snake" ], h3 [ style [ ( "padding-bottom", "10px" ) ] ] [ text "Made with Elm" ] ], board, reset ]

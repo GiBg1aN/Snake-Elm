@@ -1,15 +1,11 @@
 module Model exposing (..)
 
-import Matrix exposing (Location)
-import Keyboard.Extra as KE exposing (Direction(..), Key, arrowsDirection)
-import Time exposing (..)
-
-
---
-
 import Board exposing (..)
+import Keyboard.Extra as KE exposing (Direction(..), Key, arrowsDirection)
+import Matrix exposing (Location)
 import Snake exposing (..)
 import Status exposing (..)
+import Time exposing (..)
 
 
 type Msg

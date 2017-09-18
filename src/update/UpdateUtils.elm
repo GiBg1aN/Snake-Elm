@@ -1,16 +1,12 @@
-module UpdateUtils exposing (handleKeyBoardMsg, handleFoodMsg, moveSnake)
-
-import Keyboard.Extra as KE exposing (Direction(..), Key, arrowsDirection)
-import Matrix exposing (..)
-import List.Extra as ListE exposing (..)
-import Random exposing (Generator, int, pair)
-
-
---
+module UpdateUtils exposing (handleFoodMsg, handleKeyBoardMsg, moveSnake)
 
 import Board exposing (..)
 import Cell exposing (..)
+import Keyboard.Extra as KE exposing (Direction(..), Key, arrowsDirection)
+import List.Extra as ListE exposing (..)
+import Matrix exposing (..)
 import Model exposing (..)
+import Random exposing (Generator, int, pair)
 import Snake exposing (..)
 import Status exposing (..)
 
@@ -24,11 +20,11 @@ handleKeyBoardMsg move model =
         direction =
             resizeKeysList pressedKeys
     in
-        let
-            ( newModel, newCmd ) =
-                moveSnake direction model
-        in
-            ( { newModel | pressedKeys = pressedKeys }, newCmd )
+    let
+        ( newModel, newCmd ) =
+            moveSnake direction model
+    in
+    ( { newModel | pressedKeys = pressedKeys }, newCmd )
 
 
 handleFoodMsg : Location -> Model -> ( Model, Cmd Msg )
@@ -54,11 +50,10 @@ moveSnake direction model =
                         else
                             model.lastMove
                 in
-                    if xs == model.snake then
-                        ( model, newMessage )
-                    else
-                        ( { model | board = addSnakeAndFood xs model.foodLocation model.board, snake = xs, lastMove = lastMove }, newMessage )
-
+                if xs == model.snake then
+                    ( model, newMessage )
+                else
+                    ( { model | board = addSnakeAndFood xs model.foodLocation model.board, snake = xs, lastMove = lastMove }, newMessage )
 
             Nothing ->
                 ( { model | status = Lost }, Cmd.none )
@@ -91,26 +86,26 @@ updateSnake direction model =
                     newHead =
                         parseHead direction x model
                 in
-                    case Matrix.get newHead model.board of
-                        Just PresentFood ->
-                            Just <| newHead :: model.snake
+                case Matrix.get newHead model.board of
+                    Just PresentFood ->
+                        Just <| newHead :: model.snake
 
-                        Just Absent ->
-                            ListE.init <| newHead :: model.snake
+                    Just Absent ->
+                        ListE.init <| newHead :: model.snake
 
-                        Just PresentSnake ->
-                            case model.snake of
-                                _ :: y :: _ ->
-                                    if newHead == y then
-                                        Just model.snake
-                                    else
-                                        Nothing
-
-                                _ ->
+                    Just PresentSnake ->
+                        case model.snake of
+                            _ :: y :: _ ->
+                                if newHead == y then
+                                    Just model.snake
+                                else
                                     Nothing
 
-                        Nothing ->
-                            Nothing
+                            _ ->
+                                Nothing
+
+                    Nothing ->
+                        Nothing
 
             Nothing ->
                 Nothing
@@ -124,18 +119,18 @@ parseHead direction location model =
         ( i, j ) =
             location
     in
-        case direction of
-            North ->
-                ( (i - 1) % 10, j )
+    case direction of
+        North ->
+            ( (i - 1) % 10, j )
 
-            South ->
-                ( (i + 1) % 10, j )
+        South ->
+            ( (i + 1) % 10, j )
 
-            West ->
-                ( i, (j - 1) % 10 )
+        West ->
+            ( i, (j - 1) % 10 )
 
-            East ->
-                ( i, (j + 1) % 10 )
+        East ->
+            ( i, (j + 1) % 10 )
 
-            _ ->
-                Debug.crash "INVALID KEY"
+        _ ->
+            Debug.crash "INVALID KEY"

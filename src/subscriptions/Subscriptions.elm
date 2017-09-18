@@ -1,11 +1,7 @@
 module Subscriptions exposing (..)
 
-import Model exposing (..)
-
-
---
-
 import Keyboard.Extra as KE
+import Model exposing (..)
 import Time exposing (..)
 
 
