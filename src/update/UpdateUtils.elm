@@ -102,16 +102,11 @@ updateSnake direction model =
                         ListE.init <| newHead :: model.snake
 
                     Just PresentSnake ->
-                        case model.snake of
-                            _ :: y :: _ ->
-                                -- Inhibits the snake to go backwards.
-                                if newHead == y then
-                                    Just model.snake
-                                else
-                                    Nothing
-
-                            _ ->
-                                Nothing
+                        -- Inhibits the snake to go backwards.
+                        if List.member newHead <| List.take 2 model.snake then
+                            Just model.snake
+                        else
+                            Nothing
 
                     Nothing ->
                         Nothing
@@ -142,4 +137,4 @@ parseHead direction location model =
             ( i, (j + 1) % 10 )
 
         _ ->
-            Debug.crash "INVALID KEY"
+            ( i, j )
