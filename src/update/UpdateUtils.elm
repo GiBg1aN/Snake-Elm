@@ -88,31 +88,31 @@ isEaten oldSnake newSnake =
 updateSnake : Direction -> Model -> Maybe Snake
 updateSnake direction model =
     if direction /= NoDirection then
-        case List.head model.snake of
-            Just x ->
-                let
-                    newHead =
-                        parseHead direction x model
-                in
-                case Matrix.get newHead model.board of
-                    Just PresentFood ->
-                        Just <| newHead :: model.snake
+        List.head model.snake
+            |> Maybe.andThen
+                (\x ->
+                    let
+                        newHead =
+                            parseHead direction x model
+                    in
+                    Matrix.get newHead model.board
+                        |> Maybe.andThen
+                            (\y ->
+                                case y of
+                                    Absent ->
+                                        ListE.init <| newHead :: model.snake
 
-                    Just Absent ->
-                        ListE.init <| newHead :: model.snake
+                                    PresentFood ->
+                                        Just <| newHead :: model.snake
 
-                    Just PresentSnake ->
-                        -- Inhibits the snake to go backwards.
-                        if List.member newHead <| List.take 2 model.snake then
-                            Just model.snake
-                        else
-                            Nothing
-
-                    Nothing ->
-                        Nothing
-
-            Nothing ->
-                Nothing
+                                    PresentSnake ->
+                                        -- Inhibits the snake to go backwards.
+                                        if List.member newHead <| List.take 2 model.snake then
+                                            Just model.snake
+                                        else
+                                            Nothing
+                            )
+                )
     else
         Just model.snake
 
