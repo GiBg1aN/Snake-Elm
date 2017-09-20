@@ -41,28 +41,27 @@ handleFoodMsg food model =
 
 moveSnake : Direction -> Model -> ( Model, Cmd Msg )
 moveSnake direction model =
-    if model.status /= Lost then
-        case updateSnake direction model of
-            Just xs ->
-                let
-                    newMessage =
-                        isEaten model.snake xs
+    case updateSnake direction model of
+        Just xs ->
+            let
+                ( isChanged, newMessage ) =
+                    isEaten model.snake xs
 
-                    lastMove =
-                        if direction /= NoDirection then
-                            direction
-                        else
-                            model.lastMove
-                in
-                if xs == model.snake then
-                    ( model, newMessage )
-                else
-                    ( { model | board = addSnakeAndFood xs model.foodLocation model.board, snake = xs, lastMove = lastMove }, newMessage )
+                lastMove =
+                    if direction /= NoDirection then
+                        direction
+                    else
+                        model.lastMove
+            in
+            if xs == model.snake then
+                ( model, newMessage )
+            else if isChanged then
+                ( { model | board = addSnakeAndFood xs ( -1, -1 ) model.board, snake = xs, lastMove = lastMove }, newMessage )
+            else
+                ( { model | board = addSnakeAndFood xs model.foodLocation model.board, snake = xs, lastMove = lastMove }, newMessage )
 
-            Nothing ->
-                ( { model | status = Lost }, Cmd.none )
-    else
-        ( { model | pressedKeys = [] }, Cmd.none )
+        Nothing ->
+            ( { model | status = Lost }, Cmd.none )
 
 
 
@@ -77,12 +76,12 @@ resizeKeysList keys =
         arrowsDirection <| List.drop (List.length keys - 1) keys
 
 
-isEaten : Snake -> Snake -> Cmd Msg
+isEaten : Snake -> Snake -> ( Bool, Cmd Msg )
 isEaten oldSnake newSnake =
     if List.length oldSnake == List.length newSnake then
-        Cmd.none
+        ( False, Cmd.none )
     else
-        Random.generate Food <| pair (int 0 9) (int 0 9)
+        ( True, Random.generate Food <| pair (int 0 9) (int 0 9) )
 
 
 updateSnake : Direction -> Model -> Maybe Snake
