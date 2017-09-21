@@ -1,8 +1,8 @@
 module ResetButton exposing (view)
 
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
+import Html exposing (Html, div, button, text)
+import Html.Attributes exposing (class)
+import Html.Events exposing (onClick)
 import Model exposing (..)
 
 

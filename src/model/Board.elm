@@ -1,7 +1,7 @@
 module Board exposing (..)
 
 import Cell exposing (..)
-import Matrix exposing (..)
+import Matrix exposing (Matrix,Location,set)
 import Snake exposing (..)
 
 

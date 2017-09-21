@@ -1,13 +1,13 @@
 module UpdateUtils exposing (handleFoodMsg, handleKeyBoardMsg, moveSnake)
 
-import Board exposing (..)
+import Board exposing (addSnakeAndFood)
 import Cell exposing (..)
 import Keyboard.Extra as KE exposing (Direction(..), Key, arrowsDirection)
-import List.Extra as ListE exposing (..)
-import Matrix exposing (..)
+import List.Extra as ListE exposing (init)
+import Matrix exposing (Location)
 import Model exposing (..)
 import Random exposing (Generator, int, pair)
-import Snake exposing (..)
+import Snake exposing (Snake)
 import Status exposing (..)
 
 
@@ -52,7 +52,7 @@ moveSnake direction model =
                     else
                         model.lastMove
 
-                board =
+                newFood =
                     if isChanged then
                         ( -1, -1 )
                     else
@@ -61,7 +61,7 @@ moveSnake direction model =
             if xs == model.snake then
                 ( model, newMessage )
             else
-                ( { model | board = addSnakeAndFood xs board model.board, snake = xs, lastMove = lastMove }, newMessage )
+                ( { model | board = addSnakeAndFood xs newFood model.board, snake = xs, lastMove = lastMove }, newMessage )
 
         Nothing ->
             ( { model | status = Lost }, Cmd.none )

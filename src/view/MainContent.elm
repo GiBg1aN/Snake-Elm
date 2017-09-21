@@ -1,7 +1,7 @@
 module MainContent exposing (view)
 
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, div, table, text, h1)
+import Html.Attributes exposing (style)
 import Model exposing (..)
 import Status exposing (..)
 

@@ -1,8 +1,8 @@
 module ViewUtils exposing (..)
 
 import Cell exposing (..)
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Html exposing (Html, td)
+import Html.Attributes exposing (style, class)
 
 
 renderCell : Cell -> Html msg
