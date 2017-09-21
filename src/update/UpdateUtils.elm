@@ -18,13 +18,12 @@ handleKeyBoardMsg move model =
             KE.update move model.pressedKeys
 
         direction =
-            resizeKeysList pressedKeys
-    in
-    let
+            arrowsDirection pressedKeys
+
         ( newModel, newCmd ) =
             moveSnake direction model
     in
-    ( { newModel | pressedKeys = pressedKeys }, newCmd )
+    ( newModel, newCmd )
 
 
 
@@ -52,28 +51,20 @@ moveSnake direction model =
                         direction
                     else
                         model.lastMove
+
+                board =
+                    if isChanged then
+                        ( -1, -1 )
+                    else
+                        model.foodLocation
             in
             if xs == model.snake then
                 ( model, newMessage )
-            else if isChanged then
-                ( { model | board = addSnakeAndFood xs ( -1, -1 ) model.board, snake = xs, lastMove = lastMove }, newMessage )
             else
-                ( { model | board = addSnakeAndFood xs model.foodLocation model.board, snake = xs, lastMove = lastMove }, newMessage )
+                ( { model | board = addSnakeAndFood xs board model.board, snake = xs, lastMove = lastMove }, newMessage )
 
         Nothing ->
             ( { model | status = Lost }, Cmd.none )
-
-
-
--- Flushes the key list to avoid multiple keys pressed.
-
-
-resizeKeysList : List Key -> Direction
-resizeKeysList keys =
-    if List.length keys == 1 then
-        arrowsDirection keys
-    else
-        arrowsDirection <| List.drop (List.length keys - 1) keys
 
 
 isEaten : Snake -> Snake -> ( Bool, Cmd Msg )
