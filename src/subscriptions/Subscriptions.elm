@@ -7,4 +7,4 @@ import Time
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch [ Sub.map KeyboardMsg KE.subscriptions, Time.every Time.second Tick ]
+    Sub.batch [ Sub.map KeyboardMsg KE.subscriptions, Time.every model.speed Tick ]

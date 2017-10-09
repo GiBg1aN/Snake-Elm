@@ -7,7 +7,7 @@ import List.Extra as ListE exposing (init)
 import Matrix exposing (Location)
 import Model exposing (..)
 import Random exposing (Generator, int, pair)
-import Snake exposing (Snake)
+import Snake exposing (Snake, normalize)
 import Status exposing (..)
 
 
@@ -57,11 +57,17 @@ moveSnake direction model =
                         ( -1, -1 )
                     else
                         model.foodLocation
+
+                newSpeed =
+                    if (List.length >> normalize >> isHundred <| xs) && isChanged then
+                        model.speed - (model.speed * 0.5)
+                    else
+                        model.speed
             in
             if xs == model.snake then
                 ( model, newMessage )
             else
-                ( { model | board = addSnakeAndFood xs newFood model.board, snake = xs, lastMove = lastMove }, newMessage )
+                ( { model | board = addSnakeAndFood xs newFood model.board, snake = xs, lastMove = lastMove, speed = newSpeed }, newMessage )
 
         Nothing ->
             ( { model | status = Lost }, Cmd.none )
@@ -128,3 +134,8 @@ parseHead direction location model =
 
         _ ->
             ( i, j )
+
+
+isHundred : Int -> Bool
+isHundred n =
+    n % 100 == 0

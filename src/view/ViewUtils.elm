@@ -2,7 +2,7 @@ module ViewUtils exposing (..)
 
 import Cell exposing (..)
 import Html exposing (Html, td)
-import Html.Attributes exposing (style, class)
+import Html.Attributes exposing (class, style)
 
 
 renderCell : Cell -> Html msg

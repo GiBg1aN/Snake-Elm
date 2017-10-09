@@ -22,6 +22,7 @@ type alias Model =
     , pressedKeys : List Key
     , lastMove : Direction
     , foodLocation : Location
+    , speed : Time
     }
 
 
@@ -33,6 +34,7 @@ init =
       , pressedKeys = []
       , lastMove = West
       , foodLocation = ( 1, 1 )
+      , speed = Time.second
       }
     , Cmd.none
     )
