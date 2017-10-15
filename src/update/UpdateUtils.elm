@@ -9,6 +9,7 @@ import Model exposing (..)
 import Random exposing (Generator, int, pair)
 import Snake exposing (Snake, normalize)
 import Status exposing (..)
+import Time
 
 
 handleKeyBoardMsg : KE.Msg -> Model -> ( Model, Cmd Msg )
@@ -58,11 +59,11 @@ moveSnake direction model =
                     else
                         model.foodLocation
 
+                score =
+                    List.length >> normalize <| xs
+
                 newSpeed =
-                    if (List.length >> normalize >> isHundred <| xs) && isChanged then
-                        model.speed - (model.speed * 0.5)
-                    else
-                        model.speed
+                    Time.second * 1 / logBase 2 (toFloat <| 5 * (score // 100) + 2)
             in
             if xs == model.snake then
                 ( model, newMessage )
@@ -135,7 +136,3 @@ parseHead direction location model =
         _ ->
             ( i, j )
 
-
-isHundred : Int -> Bool
-isHundred n =
-    n % 100 == 0
