@@ -11,7 +11,7 @@ type alias Board =
 
 initMatrix : Board
 initMatrix =
-    Matrix.matrix 10 10 (\_ -> Absent)
+    Matrix.square 10 (\_ -> Absent)
         |> Matrix.set ( 1, 1 ) PresentFood
         >> addSnakeAndFood initSnake ( 1, 1 )
 

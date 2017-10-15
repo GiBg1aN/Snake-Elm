@@ -36,7 +36,12 @@ handleFoodMsg food model =
     if List.member food model.snake then
         ( model, Random.generate Food <| pair (int 0 9) (int 0 9) )
     else
-        ( { model | foodLocation = food, board = Matrix.set food PresentFood model.board }, Cmd.none )
+        ( { model
+            | foodLocation = food
+            , board = Matrix.set food PresentFood model.board
+          }
+        , Cmd.none
+        )
 
 
 moveSnake : Direction -> Model -> ( Model, Cmd Msg )
@@ -47,12 +52,6 @@ moveSnake direction model =
                 newMessage =
                     isEaten model.snake xs
 
-                lastMove =
-                    if direction /= NoDirection then
-                        direction
-                    else
-                        model.lastMove
-
                 score =
                     List.length >> normalize <| xs
 
@@ -62,7 +61,14 @@ moveSnake direction model =
                 if xs == model.snake then
                     ( model, newMessage )
                 else
-                    ( { model | board = addSnakeAndFood xs model.foodLocation model.board, snake = xs, lastMove = lastMove, speed = newSpeed }, newMessage )
+                    ( { model
+                        | board = addSnakeAndFood xs model.foodLocation model.board
+                        , snake = xs
+                        , lastMove = direction
+                        , speed = newSpeed
+                      }
+                    , newMessage
+                    )
 
         Nothing ->
             ( { model | status = Lost }, Cmd.none )
