@@ -8,7 +8,12 @@ import Status exposing (..)
 
 view : Model -> List (Html Msg) -> Html Msg
 view model cells =
-    if model.status == Lost then
-        div [ style [ ( "display", "flex" ), ( "padding", "200px" ) ] ] [ h1 [] [ text "You Lost!" ] ]
-    else
-        div [ style [ ( "display", "flex" ) ] ] [ table [] cells ]
+    case model.status of
+        Lost ->
+            div [ style [ ( "display", "flex" ), ( "padding", "200px" ) ] ] [ h1 [] [ text "You Lost!" ] ]
+
+        Win ->
+            div [ style [ ( "display", "flex" ), ( "padding", "200px" ) ] ] [ h1 [] [ text "You Won!" ] ]
+
+        Moving ->
+            div [ style [ ( "display", "flex" ) ] ] [ table [] cells ]

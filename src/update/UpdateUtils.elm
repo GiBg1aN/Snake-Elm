@@ -60,6 +60,8 @@ moveSnake direction model =
             in
                 if xs == model.snake then
                     ( model, newMessage )
+                else if score == 970 then
+                    ( { model | status = Win }, Cmd.none )
                 else
                     ( { model
                         | board = addSnakeAndFood xs model.foodLocation model.board
