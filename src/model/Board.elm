@@ -1,7 +1,7 @@
 module Board exposing (..)
 
 import Cell exposing (..)
-import Matrix exposing (Matrix,Location,set)
+import Matrix exposing (Matrix, Location, set)
 import Snake exposing (..)
 
 
@@ -22,9 +22,9 @@ addSnakeAndFood snake food board =
         aux location _ =
             if List.member location snake then
                 PresentSnake
+            else if location == food then
+                PresentFood
             else
                 Absent
     in
-    board
-        |> Matrix.mapWithLocation aux
-        >> Matrix.set food PresentFood
+        Matrix.mapWithLocation aux board

@@ -24,7 +24,7 @@ handleKeyBoardMsg move model =
         ( newModel, newCmd ) =
             moveSnake direction model
     in
-    ( newModel, newCmd )
+        ( newModel, newCmd )
 
 
 
@@ -44,7 +44,7 @@ moveSnake direction model =
     case updateSnake direction model of
         Just xs ->
             let
-                ( isChanged, newMessage ) =
+                newMessage =
                     isEaten model.snake xs
 
                 lastMove =
@@ -53,33 +53,27 @@ moveSnake direction model =
                     else
                         model.lastMove
 
-                newFood =
-                    if isChanged then
-                        ( -1, -1 )
-                    else
-                        model.foodLocation
-
                 score =
                     List.length >> normalize <| xs
 
                 newSpeed =
                     Time.second * 1 / logBase 2 (toFloat <| 5 * (score // 100) + 2)
             in
-            if xs == model.snake then
-                ( model, newMessage )
-            else
-                ( { model | board = addSnakeAndFood xs newFood model.board, snake = xs, lastMove = lastMove, speed = newSpeed }, newMessage )
+                if xs == model.snake then
+                    ( model, newMessage )
+                else
+                    ( { model | board = addSnakeAndFood xs model.foodLocation model.board, snake = xs, lastMove = lastMove, speed = newSpeed }, newMessage )
 
         Nothing ->
             ( { model | status = Lost }, Cmd.none )
 
 
-isEaten : Snake -> Snake -> ( Bool, Cmd Msg )
+isEaten : Snake -> Snake -> Cmd Msg
 isEaten oldSnake newSnake =
     if List.length oldSnake == List.length newSnake then
-        ( False, Cmd.none )
+        Cmd.none
     else
-        ( True, Random.generate Food <| pair (int 0 9) (int 0 9) )
+        Random.generate Food <| pair (int 0 9) (int 0 9)
 
 
 updateSnake : Direction -> Model -> Maybe Snake
@@ -92,23 +86,23 @@ updateSnake direction model =
                         newHead =
                             parseHead direction x model
                     in
-                    Matrix.get newHead model.board
-                        |> Maybe.andThen
-                            (\y ->
-                                case y of
-                                    Absent ->
-                                        ListE.init <| newHead :: model.snake
+                        Matrix.get newHead model.board
+                            |> Maybe.andThen
+                                (\y ->
+                                    case y of
+                                        Absent ->
+                                            ListE.init <| newHead :: model.snake
 
-                                    PresentFood ->
-                                        Just <| newHead :: model.snake
+                                        PresentFood ->
+                                            Just <| newHead :: model.snake
 
-                                    PresentSnake ->
-                                        -- Inhibits the snake to go backwards.
-                                        if List.member newHead <| List.take 2 model.snake then
-                                            Just model.snake
-                                        else
-                                            Nothing
-                            )
+                                        PresentSnake ->
+                                            -- Inhibits the snake to go backwards.
+                                            if List.member newHead <| List.take 2 model.snake then
+                                                Just model.snake
+                                            else
+                                                Nothing
+                                )
                 )
     else
         Just model.snake
@@ -120,19 +114,18 @@ parseHead direction location model =
         ( i, j ) =
             location
     in
-    case direction of
-        North ->
-            ( (i - 1) % 10, j )
+        case direction of
+            North ->
+                ( (i - 1) % 10, j )
 
-        South ->
-            ( (i + 1) % 10, j )
+            South ->
+                ( (i + 1) % 10, j )
 
-        West ->
-            ( i, (j - 1) % 10 )
+            West ->
+                ( i, (j - 1) % 10 )
 
-        East ->
-            ( i, (j + 1) % 10 )
+            East ->
+                ( i, (j + 1) % 10 )
 
-        _ ->
-            ( i, j )
-
+            _ ->
+                ( i, j )
