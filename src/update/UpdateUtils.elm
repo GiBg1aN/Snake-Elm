@@ -20,11 +20,8 @@ handleKeyBoardMsg move model =
 
         direction =
             arrowsDirection pressedKeys
-
-        ( newModel, newCmd ) =
-            moveSnake direction model
     in
-        ( newModel, newCmd )
+    moveSnake direction model
 
 
 
@@ -58,19 +55,19 @@ moveSnake direction model =
                 newSpeed =
                     Time.second * 1 / logBase 2 (toFloat <| 5 * (score // 100) + 2)
             in
-                if xs == model.snake then
-                    ( model, newMessage )
-                else if score == 970 then
-                    ( { model | status = Win }, Cmd.none )
-                else
-                    ( { model
-                        | board = addSnakeAndFood xs model.foodLocation model.board
-                        , snake = xs
-                        , lastMove = direction
-                        , speed = newSpeed
-                      }
-                    , newMessage
-                    )
+            if xs == model.snake then
+                ( model, newMessage )
+            else if score == 970 then
+                ( { model | status = Win }, Cmd.none )
+            else
+                ( { model
+                    | board = addSnakeAndFood xs model.foodLocation model.board
+                    , snake = xs
+                    , lastMove = direction
+                    , speed = newSpeed
+                  }
+                , newMessage
+                )
 
         Nothing ->
             ( { model | status = Lost }, Cmd.none )
@@ -89,28 +86,27 @@ updateSnake direction model =
     if direction /= NoDirection then
         List.head model.snake
             |> Maybe.andThen
-                (\x ->
+                (\head ->
                     let
                         newHead =
-                            parseHead direction x model
+                            parseHead direction head model
+
+                        increaseSnake cellLocation model cellState =
+                            case cellState of
+                                Absent ->
+                                    ListE.init <| cellLocation :: model.snake
+
+                                PresentFood ->
+                                    Just <| cellLocation :: model.snake
+
+                                PresentSnake ->
+                                    -- Inhibits the snake to go backwards.
+                                    if List.member cellLocation <| List.take 2 model.snake then
+                                        Just model.snake
+                                    else
+                                        Nothing
                     in
-                        Matrix.get newHead model.board
-                            |> Maybe.andThen
-                                (\y ->
-                                    case y of
-                                        Absent ->
-                                            ListE.init <| newHead :: model.snake
-
-                                        PresentFood ->
-                                            Just <| newHead :: model.snake
-
-                                        PresentSnake ->
-                                            -- Inhibits the snake to go backwards.
-                                            if List.member newHead <| List.take 2 model.snake then
-                                                Just model.snake
-                                            else
-                                                Nothing
-                                )
+                    Matrix.get newHead model.board |> Maybe.andThen (increaseSnake newHead model)
                 )
     else
         Just model.snake
@@ -122,18 +118,18 @@ parseHead direction location model =
         ( i, j ) =
             location
     in
-        case direction of
-            North ->
-                ( (i - 1) % 10, j )
+    case direction of
+        North ->
+            ( (i - 1) % 10, j )
 
-            South ->
-                ( (i + 1) % 10, j )
+        South ->
+            ( (i + 1) % 10, j )
 
-            West ->
-                ( i, (j - 1) % 10 )
+        West ->
+            ( i, (j - 1) % 10 )
 
-            East ->
-                ( i, (j + 1) % 10 )
+        East ->
+            ( i, (j + 1) % 10 )
 
-            _ ->
-                ( i, j )
+        _ ->
+            ( i, j )
