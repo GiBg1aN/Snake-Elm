@@ -1,6 +1,7 @@
 module Board exposing (..)
 
 import Cell exposing (..)
+import Constants
 import Matrix exposing (Location, Matrix)
 import Snake exposing (..)
 
@@ -11,7 +12,7 @@ type alias Board =
 
 initMatrix : Board
 initMatrix =
-    addSnakeAndFood initSnake ( 1, 1 ) <| Matrix.square 10 (\_ -> Absent)
+    addSnakeAndFood initSnake Constants.foodStartingPoint <| Matrix.square Constants.boardSize (\_ -> Absent)
 
 
 addSnakeAndFood : Snake -> Location -> Board -> Board
@@ -25,4 +26,4 @@ addSnakeAndFood snake food board =
             else
                 Absent
     in
-    Matrix.mapWithLocation aux board
+        Matrix.mapWithLocation aux board

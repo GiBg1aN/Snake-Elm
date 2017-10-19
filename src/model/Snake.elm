@@ -30,10 +30,6 @@ testingSnake n =
         testingSnakeAux <| n - 1
 
 
-normalize : Int -> Int
-normalize length =
-    let
-        startingLength =
-            List.length initSnake
-    in
-        (length - startingLength) * 10
+calcScore : Int -> Int
+calcScore snakeLength =
+    (snakeLength - List.length initSnake) * 10

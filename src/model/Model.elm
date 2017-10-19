@@ -1,6 +1,7 @@
 module Model exposing (..)
 
 import Board exposing (..)
+import Constants
 import Keyboard.Extra as KE exposing (Direction(..), Key, arrowsDirection)
 import Matrix exposing (Location)
 import Snake exposing (..)
@@ -33,7 +34,7 @@ init =
       , snake = initSnake
       , pressedKeys = []
       , lastMove = West
-      , foodLocation = ( 1, 1 )
+      , foodLocation = (Constants.foodStartingPoint)
       , speed = Time.second
       }
     , Cmd.none

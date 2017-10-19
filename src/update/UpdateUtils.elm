@@ -2,12 +2,13 @@ module UpdateUtils exposing (handleFoodMsg, handleKeyBoardMsg, moveSnake)
 
 import Board exposing (addSnakeAndFood)
 import Cell exposing (..)
+import Constants
 import Keyboard.Extra as KE exposing (Direction(..), Key, arrowsDirection)
 import List.Extra as ListE exposing (init)
 import Matrix exposing (Location)
 import Model exposing (..)
 import Random exposing (Generator, int, pair)
-import Snake exposing (Snake, normalize)
+import Snake exposing (Snake, calcScore)
 import Status exposing (..)
 import Time
 
@@ -21,7 +22,7 @@ handleKeyBoardMsg move model =
         direction =
             arrowsDirection pressedKeys
     in
-    moveSnake direction model
+        moveSnake direction model
 
 
 
@@ -31,7 +32,7 @@ handleKeyBoardMsg move model =
 handleFoodMsg : Location -> Model -> ( Model, Cmd Msg )
 handleFoodMsg food model =
     if List.member food model.snake then
-        ( model, Random.generate Food <| pair (int 0 9) (int 0 9) )
+        ( model, Random.generate Food <| pair (int 0 (Constants.boardSize - 1)) (int 0 (Constants.boardSize - 1)) )
     else
         ( { model
             | foodLocation = food
@@ -50,24 +51,24 @@ moveSnake direction model =
                     isEaten model.snake xs
 
                 score =
-                    List.length >> normalize <| xs
+                    List.length >> calcScore <| xs
 
                 newSpeed =
                     Time.second * 1 / logBase 2 (toFloat <| 5 * (score // 100) + 2)
             in
-            if xs == model.snake then
-                ( model, newMessage )
-            else if score == 970 then
-                ( { model | status = Win }, Cmd.none )
-            else
-                ( { model
-                    | board = addSnakeAndFood xs model.foodLocation model.board
-                    , snake = xs
-                    , lastMove = direction
-                    , speed = newSpeed
-                  }
-                , newMessage
-                )
+                if xs == model.snake then
+                    ( model, newMessage )
+                else if score == Constants.maxScore then
+                    ( { model | status = Win }, Cmd.none )
+                else
+                    ( { model
+                        | board = addSnakeAndFood xs model.foodLocation model.board
+                        , snake = xs
+                        , lastMove = direction
+                        , speed = newSpeed
+                      }
+                    , newMessage
+                    )
 
         Nothing ->
             ( { model | status = Lost }, Cmd.none )
@@ -78,7 +79,7 @@ isEaten oldSnake newSnake =
     if List.length oldSnake == List.length newSnake then
         Cmd.none
     else
-        Random.generate Food <| pair (int 0 9) (int 0 9)
+        Random.generate Food <| pair (int 0 (Constants.boardSize - 1)) (int 0 (Constants.boardSize - 1))
 
 
 updateSnake : Direction -> Model -> Maybe Snake
@@ -106,7 +107,7 @@ updateSnake direction model =
                                     else
                                         Nothing
                     in
-                    Matrix.get newHead model.board |> Maybe.andThen (increaseSnake newHead model)
+                        Matrix.get newHead model.board |> Maybe.andThen (increaseSnake newHead model)
                 )
     else
         Just model.snake
@@ -118,18 +119,18 @@ parseHead direction location model =
         ( i, j ) =
             location
     in
-    case direction of
-        North ->
-            ( (i - 1) % 10, j )
+        case direction of
+            North ->
+                ( (i - 1) % 10, j )
 
-        South ->
-            ( (i + 1) % 10, j )
+            South ->
+                ( (i + 1) % 10, j )
 
-        West ->
-            ( i, (j - 1) % 10 )
+            West ->
+                ( i, (j - 1) % 10 )
 
-        East ->
-            ( i, (j + 1) % 10 )
+            East ->
+                ( i, (j + 1) % 10 )
 
-        _ ->
-            ( i, j )
+            _ ->
+                ( i, j )
